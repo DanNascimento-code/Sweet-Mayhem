@@ -6,7 +6,7 @@ const DEFAULT_VOLUME = 0.24
 const MUTED_STORAGE_KEY = 'sweet-mayhem:music-muted'
 
 const GENRE_LABELS = {
-  gothic: 'Gótico',
+  gothic: 'Goth',
   darkwave: 'Darkwave',
   deathcore: 'Deathcore',
 }
@@ -162,7 +162,7 @@ function BackgroundMusic({ phase }) {
         onClick={handleToggleMusic}
       >
         <span className="music-icon" aria-hidden="true">
-          {isAudible ? '♪' : '×'}
+          {isAudible ? '☠️' : '×'}
         </span>
 
         <span className="music-copy">

@@ -2,6 +2,8 @@ import { useRef, useState } from 'react'
 
 import AnimatedBackground from './components/AnimatedBackground.jsx'
 import BackgroundMusic from './components/BackgroundMusic.jsx'
+import CandiesSounds from './components/CandiesSounds.jsx'
+import { SFX_IDS } from './audio/sfxCatalog.js'
 import blueCandy from './images/dark-candies/blue-haunted-moon.png'
 import colorBombCandy from './images/dark-candies/color-bomb.png'
 import greenCandy from './images/dark-candies/green-poison-apple.png'
@@ -216,6 +218,7 @@ function App() {
   const [isResolving, setIsResolving] = useState(false)
   const [activeStep, setActiveStep] = useState(null)
   const resolvingRef = useRef(false)
+  const candiesSoundsRef = useRef(null)
   const [animatedIndices, setAnimatedIndices] = useState([])
   const [swapAnimation, setSwapAnimation] = useState(null)
 
@@ -332,6 +335,11 @@ function App() {
     setSelectedIndex(null)
   }
 
+  function handleDragStart(index) {
+    setDraggedIndex(index)
+    candiesSoundsRef.current?.play(SFX_IDS.DRAG_START)
+  }
+
   function handleDrop(event, targetIndex) {
     event.preventDefault()
 
@@ -354,6 +362,7 @@ function App() {
   return (
     <main className="app">
       <AnimatedBackground />
+      <CandiesSounds ref={candiesSoundsRef} />
 
       <section className="game-shell" aria-label="Jogo de combinar doces">
         <header className="game-header">
@@ -408,7 +417,7 @@ function App() {
                 aria-label={getCandyAriaLabel(candy, index)}
                 aria-pressed={selectedIndex === index}
                 onClick={() => handleTileClick(index)}
-                onDragStart={() => setDraggedIndex(index)}
+                onDragStart={() => handleDragStart(index)}
                 onDragOver={(event) => event.preventDefault()}
                 onDrop={(event) => handleDrop(event, index)}
                 onDragEnd={() => setDraggedIndex(null)}
