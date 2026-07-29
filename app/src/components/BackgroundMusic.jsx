@@ -1,12 +1,17 @@
 import { useEffect, useRef, useState } from 'react'
 
-import { getMusicForPhase } from '../audio/musicCatalog.js'
+import {
+  MUSIC_PLAYLIST,
+  getNextTrackIndex,
+  getPlaylistTrack,
+} from '../audio/musicCatalog.js'
 
-const DEFAULT_VOLUME = 0.24
+const DEFAULT_VOLUME = 0.18
 const MUTED_STORAGE_KEY = 'sweet-mayhem:music-muted'
 
 const GENRE_LABELS = {
   gothic: 'Goth',
+  goth: 'Goth',
   darkwave: 'Darkwave',
   deathcore: 'Deathcore',
 }
@@ -19,11 +24,12 @@ function getInitialMutedPreference() {
   }
 }
 
-function BackgroundMusic({ phase }) {
-  const track = getMusicForPhase(phase)
+function BackgroundMusic() {
   const audioRef = useRef(null)
+  const [currentTrackIndex, setCurrentTrackIndex] = useState(0)
   const [isMuted, setIsMuted] = useState(getInitialMutedPreference)
   const [playbackState, setPlaybackState] = useState('loading')
+  const track = getPlaylistTrack(currentTrackIndex)
 
   useEffect(() => {
     const audio = audioRef.current
@@ -69,7 +75,7 @@ function BackgroundMusic({ phase }) {
       void attemptPlayback()
     }
 
-    audio.loop = true
+    audio.loop = false
     audio.preload = 'auto'
     audio.volume = DEFAULT_VOLUME
     audio.load()
@@ -116,7 +122,18 @@ function BackgroundMusic({ phase }) {
       ? 'Clique para ouvir'
       : playbackState === 'error'
         ? 'Áudio indisponível'
-        : `${GENRE_LABELS[track.genre]} · Fase ${phase}`
+        : `${GENRE_LABELS[track.genre]} · ${currentTrackIndex + 1}/${MUSIC_PLAYLIST.length}`
+
+  function handleTrackEnded() {
+    const nextTrackIndex = getNextTrackIndex(currentTrackIndex)
+
+    if (nextTrackIndex === null) {
+      return
+    }
+
+    setPlaybackState('loading')
+    setCurrentTrackIndex(nextTrackIndex)
+  }
 
   async function handleToggleMusic() {
     const audio = audioRef.current
@@ -150,8 +167,8 @@ function BackgroundMusic({ phase }) {
         ref={audioRef}
         src={track.src}
         muted={isMuted}
-        loop
         preload="auto"
+        onEnded={handleTrackEnded}
       />
 
       <button

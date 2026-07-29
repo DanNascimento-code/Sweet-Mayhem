@@ -206,6 +206,18 @@ button {
   }
 }
 
+.game-stage {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-areas: "game character";
+  grid-template-columns: minmax(0, 680px) minmax(130px, 190px);
+  width: min(100%, 900px);
+  align-items: center;
+  justify-content: center;
+  gap: clamp(12px, 2.5vw, 30px);
+}
+
 .game-shell {
   position: relative;
   z-index: 1;
@@ -218,6 +230,155 @@ button {
   box-shadow:
     0 35px 90px rgb(0 0 0 / 55%),
     inset 0 1px 0 rgb(255 255 255 / 12%);
+}
+
+.game-stage .game-shell {
+  grid-area: game;
+  width: 100%;
+}
+
+.start-screen {
+  position: relative;
+  z-index: 1;
+  width: min(100%, 640px);
+  padding: clamp(28px, 5vw, 42px);
+  border: 1px solid rgb(255 255 255 / 12%);
+  border-radius: 32px;
+  text-align: center;
+  background:
+    radial-gradient(circle at 50% 0%, rgb(210 91 255 / 20%), transparent 48%),
+    linear-gradient(160deg, rgb(43 20 55 / 92%), rgb(14 8 20 / 96%));
+  backdrop-filter: blur(10px) saturate(0.9);
+  box-shadow:
+    0 35px 90px rgb(0 0 0 / 58%),
+    inset 0 1px 0 rgb(255 255 255 / 14%);
+}
+
+.start-screen .eyebrow {
+  margin-bottom: 12px;
+}
+
+.start-screen h1 {
+  font-size: clamp(2.3rem, 7vw, 3.8rem);
+  text-wrap: balance;
+}
+
+.kuromi-character {
+  pointer-events: none;
+  user-select: none;
+}
+
+.kuromi-character img {
+  display: block;
+  width: 100%;
+  height: auto;
+  filter:
+    drop-shadow(0 14px 18px rgb(0 0 0 / 42%))
+    drop-shadow(0 0 14px rgb(219 104 255 / 20%));
+}
+
+.kuromi-character[data-placement="start"] {
+  width: clamp(120px, 24vw, 155px);
+  margin: 14px auto -2px;
+}
+
+.kuromi-character[data-placement="game"] {
+  grid-area: character;
+  width: 100%;
+  max-width: 190px;
+  justify-self: center;
+  margin-bottom: 0;
+}
+
+.start-description {
+  max-width: 38ch;
+  margin: 16px auto 0;
+  color: #d9c8df;
+  font-size: clamp(0.95rem, 2.5vw, 1.1rem);
+  line-height: 1.6;
+  text-wrap: balance;
+}
+
+.start-button {
+  margin-top: 22px;
+  padding: 13px 26px;
+  border: 1px solid rgb(244 185 255 / 48%);
+  border-radius: 999px;
+  color: #fff7ff;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  background: linear-gradient(135deg, #7f2b99, #471253);
+  box-shadow:
+    0 12px 30px rgb(0 0 0 / 36%),
+    0 0 24px rgb(209 69 255 / 24%);
+  transition: border-color 150ms ease, box-shadow 150ms ease, transform 150ms ease;
+}
+
+.start-button:hover {
+  border-color: #f4b9ff;
+  box-shadow:
+    0 16px 34px rgb(0 0 0 / 42%),
+    0 0 30px rgb(209 69 255 / 42%);
+  transform: translateY(-2px) scale(1.02);
+}
+
+.start-button:focus-visible {
+  outline: 3px solid rgb(244 185 255 / 58%);
+  outline-offset: 4px;
+}
+
+.start-button:disabled {
+  cursor: wait;
+  opacity: 0.72;
+}
+
+.app[data-screen="transitioning"] .start-screen {
+  pointer-events: none;
+  animation: start-screen-exit 650ms cubic-bezier(0.55, 0, 0.8, 0.25) both;
+}
+
+.app[data-screen="playing"] .game-shell {
+  animation: game-shell-enter 650ms cubic-bezier(0.18, 0.8, 0.25, 1) both;
+}
+
+@keyframes start-screen-exit {
+  0% {
+    opacity: 1;
+    filter: blur(0);
+    transform: translateY(0) scale(1);
+  }
+
+  45% {
+    opacity: 0.92;
+    transform: translateY(-4px) scale(1.025);
+  }
+
+  100% {
+    opacity: 0;
+    filter: blur(10px);
+    transform: translateY(-24px) scale(0.92);
+  }
+}
+
+@keyframes game-shell-enter {
+  0% {
+    opacity: 0;
+    filter: blur(10px);
+    transform: translateY(26px) scale(0.94);
+  }
+
+  65% {
+    opacity: 1;
+    filter: blur(0);
+    transform: translateY(-3px) scale(1.01);
+  }
+
+  100% {
+    opacity: 1;
+    filter: blur(0);
+    transform: translateY(0) scale(1);
+  }
 }
 
 .game-header,
@@ -744,6 +905,14 @@ h1 {
     border-radius: 22px;
   }
 
+  .kuromi-character[data-placement="start"] {
+    width: 132px;
+  }
+
+  .kuromi-character[data-placement="game"] {
+    width: 86px;
+  }
+
   .game-header,
   .game-footer {
     align-items: flex-start;
@@ -769,6 +938,22 @@ h1 {
 
   .message {
     font-size: 0.8rem;
+  }
+}
+
+@media (max-width: 900px) {
+  .game-stage {
+    grid-template-areas:
+      "character"
+      "game";
+    grid-template-columns: minmax(0, 680px);
+    width: min(100%, 680px);
+    gap: 0;
+  }
+
+  .kuromi-character[data-placement="game"] {
+    width: clamp(86px, 20vw, 118px);
+    margin-bottom: -8px;
   }
 }
 

@@ -2,9 +2,8 @@ function createTrack(track) {
   return Object.freeze(track);
 }
 
-export const MUSIC_CATALOG = Object.freeze([
+export const MUSIC_PLAYLIST = Object.freeze([
   createTrack({
-    phase: 1,
     genre: 'gothic',
     title: 'Gothic',
     artist: 'Ebunny',
@@ -19,8 +18,7 @@ export const MUSIC_CATALOG = Object.freeze([
   }),
 
   createTrack({
-    phase: 2,
-    genre: 'Goth',
+    genre: 'goth',
     artist: 'Depeche Mode',
     title: 'Depeche Mode - Occults',
     src: new URL(
@@ -33,7 +31,6 @@ export const MUSIC_CATALOG = Object.freeze([
     licenseUrl: 'https://creativecommons.org/licenses/by/4.0/'
   }),
   createTrack({
-    phase: 3,
     genre: 'darkwave',
     title: 'Darker Waves',
     artist: 'Zander Noriega',
@@ -47,10 +44,22 @@ export const MUSIC_CATALOG = Object.freeze([
   })
 ]);
 
-export function getMusicForPhase(phase) {
-  if (!Number.isInteger(phase)) {
+export function getPlaylistTrack(trackIndex) {
+  if (
+    !Number.isInteger(trackIndex) ||
+    trackIndex < 0 ||
+    trackIndex >= MUSIC_PLAYLIST.length
+  ) {
     return null;
   }
 
-  return MUSIC_CATALOG.find((track) => track.phase === phase) || null;
+  return MUSIC_PLAYLIST[trackIndex];
+}
+
+export function getNextTrackIndex(trackIndex) {
+  if (getPlaylistTrack(trackIndex) === null) {
+    return null;
+  }
+
+  return (trackIndex + 1) % MUSIC_PLAYLIST.length;
 }

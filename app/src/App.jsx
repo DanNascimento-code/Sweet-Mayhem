@@ -3,7 +3,9 @@ import { useRef, useState } from 'react'
 import AnimatedBackground from './components/AnimatedBackground.jsx'
 import BackgroundMusic from './components/BackgroundMusic.jsx'
 import CandiesSounds from './components/CandiesSounds.jsx'
+import KuromiCharacter from './components/KuromiCharacter.jsx'
 import { SFX_IDS } from './audio/sfxCatalog.js'
+import { getMatchSoundIdsForStep } from './audio/sfxEvents.js'
 import blueCandy from './images/dark-candies/blue-haunted-moon.png'
 import colorBombCandy from './images/dark-candies/color-bomb.png'
 import greenCandy from './images/dark-candies/green-poison-apple.png'
@@ -23,7 +25,12 @@ import { SPECIAL_TYPES } from './game/candy.js'
  
 
 const BOARD_WIDTH = 8
-const CURRENT_PHASE = 1
+const SFX_MASTER_VOLUME = 1
+const APP_SCREENS = Object.freeze({
+  START: 'start',
+  TRANSITIONING: 'transitioning',
+  PLAYING: 'playing',
+})
 const CANDY_TYPES = ['blue', 'green', 'orange', 'purple', 'red', 'yellow']
 const CANDY_IMAGES = {
   blue: blueCandy,
@@ -208,7 +215,8 @@ function newBoard() {
 }
 
 function App() {
-  const [board, setBoard] = useState(newBoard)
+  const [currentScreen, setCurrentScreen] = useState(APP_SCREENS.START)
+  const [board, setBoard] = useState([])
   const [draggedIndex, setDraggedIndex] = useState(null)
   const [selectedIndex, setSelectedIndex] = useState(null)
   const [score, setScore] = useState(0)
@@ -237,11 +245,13 @@ function App() {
   })
 
   if (!result.accepted && result.reason === 'not-adjacent') {
+    candiesSoundsRef.current?.play(SFX_IDS.SWAP_REJECTED)
     setMessage('Esses doces não são vizinhos.')
     return
   }
 
   if (!result.accepted) {
+    candiesSoundsRef.current?.play(SFX_IDS.SWAP_REJECTED)
     resolvingRef.current = true
     setIsResolving(true)
     setMessage('Essa troca não forma uma combinação.')
@@ -282,6 +292,12 @@ function App() {
     let previousBoard = board
 
     for (const step of result.steps) {
+      if (step.type === 'match-found') {
+        const matchSoundIds = getMatchSoundIdsForStep(step)
+
+        candiesSoundsRef.current?.playMany(matchSoundIds)
+      }
+
       setAnimatedIndices(
         getAnimatedIndices(previousBoard, step),
       )
@@ -326,6 +342,7 @@ function App() {
     }
 
     if (!areAdjacent(selectedIndex, index, BOARD_WIDTH, board.length)) {
+      candiesSoundsRef.current?.play(SFX_IDS.SWAP_REJECTED)
       setSelectedIndex(index)
       setMessage('Seleção alterada. Escolha um vizinho deste doce.')
       return
@@ -351,20 +368,86 @@ function App() {
     setSelectedIndex(null)
   }
 
-  function restartGame() {
+  function resetGame(nextMessage) {
     setBoard(newBoard())
     setScore(0)
     setDraggedIndex(null)
     setSelectedIndex(null)
-    setMessage('Novo tabuleiro criado sem combinações iniciais.')
+    setActiveStep(null)
+    setAnimatedIndices([])
+    setSwapAnimation(null)
+    resolvingRef.current = false
+    setIsResolving(false)
+    setMessage(nextMessage)
+  }
+
+  function handleStartGame() {
+    if (currentScreen !== APP_SCREENS.START) {
+      return
+    }
+
+    resetGame('Arraste um doce ou selecione dois vizinhos.')
+    setCurrentScreen(APP_SCREENS.TRANSITIONING)
+  }
+
+  function handleStartTransitionEnd(event) {
+    const transitionBelongsToStartScreen =
+      event.target === event.currentTarget
+
+    if (
+      currentScreen !== APP_SCREENS.TRANSITIONING ||
+      !transitionBelongsToStartScreen
+    ) {
+      return
+    }
+
+    setCurrentScreen(APP_SCREENS.PLAYING)
+  }
+
+  function restartGame() {
+    resetGame('Novo tabuleiro criado sem combinações iniciais.')
   }
 
   return (
-    <main className="app">
+    <main className="app" data-screen={currentScreen}>
       <AnimatedBackground />
-      <CandiesSounds ref={candiesSoundsRef} />
+      <CandiesSounds
+        ref={candiesSoundsRef}
+        masterVolume={SFX_MASTER_VOLUME}
+      />
 
-      <section className="game-shell" aria-label="Jogo de combinar doces">
+      {currentScreen !== APP_SCREENS.PLAYING && (
+        <section
+          className="start-screen"
+          aria-labelledby="start-title"
+          aria-busy={currentScreen === APP_SCREENS.TRANSITIONING}
+          onAnimationEnd={handleStartTransitionEnd}
+        >
+          <p className="eyebrow">Dark Candy</p>
+          <h1 id="start-title">Kuromi: Sweet Mayhem</h1>
+          <KuromiCharacter placement="start" />
+          <p className="start-description">
+            Combine doces amaldiçoados e desperte o caos mais fofo das trevas.
+          </p>
+
+          <button
+            className="start-button"
+            type="button"
+            disabled={currentScreen === APP_SCREENS.TRANSITIONING}
+            onClick={handleStartGame}
+          >
+            {currentScreen === APP_SCREENS.TRANSITIONING
+              ? 'Despertando...'
+              : 'Iniciar jogo'}
+          </button>
+        </section>
+      )}
+
+      {currentScreen === APP_SCREENS.PLAYING && (
+        <div className="game-stage">
+          <KuromiCharacter placement="game" />
+
+          <section className="game-shell" aria-label="Jogo de combinar doces">
         <header className="game-header">
           <div>
             <p className="eyebrow">Dark Candy — protótipo</p>
@@ -450,7 +533,7 @@ function App() {
           </p>
 
           <div className="footer-controls">
-            <BackgroundMusic phase={CURRENT_PHASE} />
+            <BackgroundMusic />
 
             <button 
               className="restart-button"
@@ -462,7 +545,9 @@ function App() {
             </button>
           </div>
         </footer>
-      </section>
+          </section>
+        </div>
+      )}
     </main>
   )
 }
