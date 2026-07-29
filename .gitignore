@@ -1,0 +1,16 @@
+# Dependency and build output
+node_modules/
+dist/
+
+# Python environments and caches
+.venv/
+.cache/
+__pycache__/
+*.pyc
+
+# Local and operating-system files
+*.log
+*.local
+.DS_Store
+Thumbs.db
+
