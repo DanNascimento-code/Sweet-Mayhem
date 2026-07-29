@@ -2,6 +2,7 @@ import kuromiIdle from '../images/characters/kuromi-idle-v2.png'
 import kuromiCelebrate from '../images/characters/kuromi-celebrate.png'
 import kuromiDisapprove from '../images/characters/kuromi-disapprove.png'
 import kuromiEpic from '../images/characters/kuromi-epic.png'
+import kuromiWelcome from '../images/characters/kuromi-welcome.png'
 import CharacterVoice from './CharacterVoice.jsx'
 import {
   CHARACTER_REACTION_IDS,
@@ -12,6 +13,7 @@ import { getCharacterVoiceAsset } from '../character/voiceCatalog.js'
 
 const CHARACTER_IMAGES = Object.freeze({
   idle: kuromiIdle,
+  welcome: kuromiWelcome,
   attention: kuromiIdle,
   disapprove: kuromiDisapprove,
   'celebrate-small': kuromiCelebrate,
@@ -45,8 +47,8 @@ function KuromiCharacter({
       : null
   const accessibleDescription =
     placement === 'start'
-      ? 'Kuromi apresentando o jogo'
-      : 'Kuromi observando o tabuleiro'
+      ? 'Kuromi presenting the game'
+      : 'Kuromi watching the board'
 
   return (
     <div

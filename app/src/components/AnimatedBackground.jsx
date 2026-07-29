@@ -80,9 +80,13 @@ function BatIcon() {
   )
 }
 
-function AnimatedBackground() {
+function AnimatedBackground({ variant = 'game' }) {
   return (
-    <div className="animated-background" aria-hidden="true">
+    <div
+      className="animated-background"
+      data-variant={variant}
+      aria-hidden="true"
+    >
       <div className="fog-layer fog-layer-back" />
 
       <div className="bat-swarm">

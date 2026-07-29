@@ -46,6 +46,18 @@ test('idle is indefinite and active reactions have positive durations', () => {
   }
 })
 
+test('welcome is intentionally longer than the regular reactions', () => {
+  const welcome =
+    CHARACTER_REACTION_CATALOG[CHARACTER_REACTION_IDS.WELCOME]
+  const regularDurations = Object.values(CHARACTER_REACTION_CATALOG)
+    .filter(({ id }) => id !== CHARACTER_REACTION_IDS.IDLE)
+    .filter(({ id }) => id !== CHARACTER_REACTION_IDS.WELCOME)
+    .map(({ duration }) => duration)
+
+  assert.ok(welcome.duration > Math.max(...regularDurations))
+  assert.ok(welcome.motionDuration >= 3000)
+})
+
 test('reaction priorities grow with the importance of the game event', () => {
   const priorityFor = (reactionId) =>
     CHARACTER_REACTION_CATALOG[reactionId].priority

@@ -6,6 +6,9 @@ function createDialogueLines(lines) {
 
 export const CHARACTER_DIALOGUE_CATALOG = Object.freeze({
   [CHARACTER_REACTION_IDS.IDLE]: createDialogueLines([]),
+  [CHARACTER_REACTION_IDS.WELCOME]: createDialogueLines([
+    'Welcome to my little nightmare. Try not to embarrass yourself... I hate boring guests.',
+  ]),
   [CHARACTER_REACTION_IDS.DRAG_START]: createDialogueLines([
     'Choose your next chaos wisely.',
     "Let's see if this swap is any good...",

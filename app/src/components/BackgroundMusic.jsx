@@ -1,4 +1,11 @@
-import { useEffect, useRef, useState } from 'react'
+import {
+  forwardRef,
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useRef,
+  useState,
+} from 'react'
 
 import {
   MUSIC_PLAYLIST,
@@ -10,9 +17,10 @@ const DEFAULT_VOLUME = 0.18
 const MUTED_STORAGE_KEY = 'sweet-mayhem:music-muted'
 
 const GENRE_LABELS = {
-  gothic: 'Goth',
+  gothic: 'Gothic',
   goth: 'Goth',
   darkwave: 'Darkwave',
+  'dark-metal': 'Dark Metal',
   deathcore: 'Deathcore',
 }
 
@@ -24,12 +32,42 @@ function getInitialMutedPreference() {
   }
 }
 
-function BackgroundMusic() {
+const BackgroundMusic = forwardRef(function BackgroundMusic(
+  { showControl = true },
+  ref,
+) {
   const audioRef = useRef(null)
+  const hasStartedRef = useRef(false)
   const [currentTrackIndex, setCurrentTrackIndex] = useState(0)
   const [isMuted, setIsMuted] = useState(getInitialMutedPreference)
-  const [playbackState, setPlaybackState] = useState('loading')
+  const [playbackState, setPlaybackState] = useState('idle')
   const track = getPlaylistTrack(currentTrackIndex)
+
+  const play = useCallback(async ({ unmute = false } = {}) => {
+    const audio = audioRef.current
+
+    if (audio === null) {
+      return false
+    }
+
+    hasStartedRef.current = true
+
+    if (unmute) {
+      audio.muted = false
+      setIsMuted(false)
+    }
+
+    try {
+      await audio.play()
+      setPlaybackState('playing')
+      return true
+    } catch {
+      setPlaybackState('waiting')
+      return false
+    }
+  }, [])
+
+  useImperativeHandle(ref, () => ({ play }), [play])
 
   useEffect(() => {
     const audio = audioRef.current
@@ -40,18 +78,10 @@ function BackgroundMusic() {
 
     let isDisposed = false
 
-    function removeUnlockListeners() {
-      document.removeEventListener('pointerdown', handleFirstInteraction, true)
-      document.removeEventListener('click', handleFirstInteraction, true)
-      document.removeEventListener('keydown', handleFirstInteraction, true)
-    }
-
     function handlePlaybackStarted() {
       if (!isDisposed) {
         setPlaybackState('playing')
       }
-
-      removeUnlockListeners()
     }
 
     function handlePlaybackError() {
@@ -60,37 +90,19 @@ function BackgroundMusic() {
       }
     }
 
-    async function attemptPlayback() {
-      try {
-        await audio.play()
-        handlePlaybackStarted()
-      } catch {
-        if (!isDisposed) {
-          setPlaybackState('waiting')
-        }
-      }
-    }
-
-    function handleFirstInteraction() {
-      void attemptPlayback()
-    }
-
     audio.loop = false
     audio.preload = 'auto'
     audio.volume = DEFAULT_VOLUME
     audio.load()
-
     audio.addEventListener('playing', handlePlaybackStarted)
     audio.addEventListener('error', handlePlaybackError)
-    document.addEventListener('pointerdown', handleFirstInteraction, true)
-    document.addEventListener('click', handleFirstInteraction, true)
-    document.addEventListener('keydown', handleFirstInteraction, true)
 
-    void attemptPlayback()
+    if (hasStartedRef.current) {
+      void audio.play().catch(handlePlaybackError)
+    }
 
     return () => {
       isDisposed = true
-      removeUnlockListeners()
       audio.removeEventListener('playing', handlePlaybackStarted)
       audio.removeEventListener('error', handlePlaybackError)
       audio.pause()
@@ -117,12 +129,14 @@ function BackgroundMusic() {
 
   const isAudible = playbackState === 'playing' && !isMuted
   const statusLabel = isMuted
-    ? 'Música silenciada'
-    : playbackState === 'waiting'
-      ? 'Clique para ouvir'
-      : playbackState === 'error'
-        ? 'Áudio indisponível'
-        : `${GENRE_LABELS[track.genre]} · ${currentTrackIndex + 1}/${MUSIC_PLAYLIST.length}`
+    ? 'Music muted'
+    : playbackState === 'idle'
+      ? 'Music ready'
+      : playbackState === 'waiting'
+        ? 'Click to play'
+        : playbackState === 'error'
+          ? 'Audio unavailable'
+          : `${GENRE_LABELS[track.genre]} · ${currentTrackIndex + 1}/${MUSIC_PLAYLIST.length}`
 
   function handleTrackEnded() {
     const nextTrackIndex = getNextTrackIndex(currentTrackIndex)
@@ -142,28 +156,19 @@ function BackgroundMusic() {
       return
     }
 
-    const shouldEnable = isMuted || playbackState !== 'playing'
-
-    if (!shouldEnable) {
+    if (isAudible) {
       audio.muted = true
       setIsMuted(true)
       return
     }
 
-    audio.muted = false
-    setIsMuted(false)
-
-    try {
-      await audio.play()
-      setPlaybackState('playing')
-    } catch {
-      setPlaybackState('waiting')
-    }
+    await play({ unmute: true })
   }
 
   return (
-    <div className="music-control" data-playing={isAudible || undefined}>
+    <>
       <audio
+        className="background-music-audio"
         ref={audioRef}
         src={track.src}
         muted={isMuted}
@@ -171,24 +176,28 @@ function BackgroundMusic() {
         onEnded={handleTrackEnded}
       />
 
-      <button
-        className="music-toggle"
-        type="button"
-        aria-pressed={isAudible}
-        aria-label={isAudible ? 'Silenciar música' : 'Ativar música'}
-        onClick={handleToggleMusic}
-      >
-        <span className="music-icon" aria-hidden="true">
-          {isAudible ? '☠️' : '×'}
-        </span>
+      {showControl && (
+        <div className="music-control" data-playing={isAudible || undefined}>
+          <button
+            className="music-toggle"
+            type="button"
+            aria-pressed={isAudible}
+            aria-label={isAudible ? 'Mute music' : 'Play music'}
+            onClick={handleToggleMusic}
+          >
+            <span className="music-icon" aria-hidden="true">
+              {isAudible ? '♪' : '×'}
+            </span>
 
-        <span className="music-copy">
-          <small>{statusLabel}</small>
-          <strong>{track.title}</strong>
-        </span>
-      </button>
-    </div>
+            <span className="music-copy">
+              <small>{statusLabel}</small>
+              <strong>{track.title}</strong>
+            </span>
+          </button>
+        </div>
+      )}
+    </>
   )
-}
+})
 
 export default BackgroundMusic

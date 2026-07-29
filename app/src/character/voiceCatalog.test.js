@@ -11,16 +11,25 @@ import {
   getCharacterVoiceAsset,
 } from './voiceCatalog.js'
 
-test('voice catalog mirrors the dialogue variations for every reaction', () => {
+test('voice catalog mirrors spoken dialogue and keeps drag feedback silent', () => {
   assert.deepEqual(
     Object.keys(CHARACTER_VOICE_CATALOG),
     Object.values(CHARACTER_REACTION_IDS),
   )
 
+  const silentReactionIds = new Set([
+    CHARACTER_REACTION_IDS.IDLE,
+    CHARACTER_REACTION_IDS.DRAG_START,
+  ])
+
   for (const reactionId of Object.values(CHARACTER_REACTION_IDS)) {
+    const expectedVoiceCount = silentReactionIds.has(reactionId)
+      ? 0
+      : CHARACTER_DIALOGUE_CATALOG[reactionId].length
+
     assert.equal(
       CHARACTER_VOICE_CATALOG[reactionId].length,
-      CHARACTER_DIALOGUE_CATALOG[reactionId].length,
+      expectedVoiceCount,
     )
     assert.equal(
       Object.isFrozen(CHARACTER_VOICE_CATALOG[reactionId]),
@@ -32,7 +41,7 @@ test('voice catalog mirrors the dialogue variations for every reaction', () => {
 test('every voice asset is immutable, local and has a valid volume', () => {
   const voiceAssets = getAllCharacterVoiceAssets()
 
-  assert.equal(voiceAssets.length, 21)
+  assert.equal(voiceAssets.length, 19)
   assert.equal(Object.isFrozen(voiceAssets), true)
 
   for (const voiceAsset of voiceAssets) {
@@ -58,5 +67,12 @@ test('voice selection cycles with the same deterministic policy as dialogue', ()
     getCharacterVoiceAsset(CHARACTER_REACTION_IDS.IDLE, 0),
     null,
   )
+  assert.equal(
+    getCharacterVoiceAsset(CHARACTER_REACTION_IDS.DRAG_START, 0),
+    null,
+  )
+  assert.equal(
+    getCharacterVoiceAsset(CHARACTER_REACTION_IDS.WELCOME, 0)?.id,
+    'welcome-0',
+  )
 })
-

@@ -49,3 +49,13 @@ test('unknown reactions and idle do not produce dialogue', () => {
     null,
   )
 })
+
+test('welcome uses the longer sarcastic greeting', () => {
+  const welcomeLine = getCharacterDialogueLine(
+    CHARACTER_REACTION_IDS.WELCOME,
+    0,
+  )
+
+  assert.match(welcomeLine, /Welcome to my little nightmare/)
+  assert.match(welcomeLine, /boring guests/)
+})

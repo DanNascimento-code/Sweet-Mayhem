@@ -5,16 +5,16 @@ function createTrack(track) {
 export const MUSIC_PLAYLIST = Object.freeze([
   createTrack({
     genre: 'gothic',
-    title: 'Gothic',
+    title: 'Animated Death Loop',
     artist: 'Ebunny',
     src: new URL(
-      './music/phase-01-gothic.mp3',
+      './music/track-01-animated-death-loop.mp3',
       import.meta.url
     ).href,
     sourceUrl:
-      'https://freemusicarchive.org/music/Origami_Repetika/2021-tracks/gothic-dance-floor/',
-    license: 'CC BY 4.0',
-    licenseUrl: 'https://creativecommons.org/licenses/by/4.0/'
+      'https://pixabay.com/music/modern-classical-animated-death-loop-536568/',
+    license: 'Pixabay Content License',
+    licenseUrl: 'https://pixabay.com/service/license-summary/'
   }),
 
   createTrack({
@@ -31,14 +31,15 @@ export const MUSIC_PLAYLIST = Object.freeze([
     licenseUrl: 'https://creativecommons.org/licenses/by/4.0/'
   }),
   createTrack({
-    genre: 'darkwave',
-    title: 'Darker Waves',
+    genre: 'dark-metal',
+    title: "Fight Them Until We Can't",
     artist: 'Zander Noriega',
     src: new URL(
-      './music/phase-03-darker-waves.mp3',
+      './music/track-03-fight-them-until-we-cant.mp3',
       import.meta.url
     ).href,
-    sourceUrl: 'https://opengameart.org/content/darker-waves',
+    sourceUrl:
+      'https://opengameart.org/content/fight-them-until-we-cant',
     license: 'CC BY 3.0',
     licenseUrl: 'https://creativecommons.org/licenses/by/3.0/'
   })

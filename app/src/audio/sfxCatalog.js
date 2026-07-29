@@ -16,7 +16,7 @@ export const SFX_IDS = Object.freeze({
 export const SFX_CATALOG = Object.freeze({
   [SFX_IDS.DRAG_START]: createSoundEffect({
     id: SFX_IDS.DRAG_START,
-    title: 'Início do arraste',
+    title: 'Drag start',
     src: new URL('./sfx/drag-start.wav', import.meta.url).href,
     volume: 0.5,
     polyphony: 2,
@@ -24,7 +24,7 @@ export const SFX_CATALOG = Object.freeze({
 
   [SFX_IDS.SWAP_REJECTED]: createSoundEffect({
     id: SFX_IDS.SWAP_REJECTED,
-    title: 'Troca rejeitada',
+    title: 'Rejected swap',
     src: new URL('./sfx/swap-rejected.wav', import.meta.url).href,
     volume: 0.58,
     polyphony: 2,
@@ -32,7 +32,7 @@ export const SFX_CATALOG = Object.freeze({
 
   [SFX_IDS.MATCH_3]: createSoundEffect({
     id: SFX_IDS.MATCH_3,
-    title: 'Combinação de três',
+    title: 'Match of three',
     src: new URL('./sfx/match-3.wav', import.meta.url).href,
     volume: 0.62,
     polyphony: 6,
@@ -40,7 +40,7 @@ export const SFX_CATALOG = Object.freeze({
 
   [SFX_IDS.MATCH_4]: createSoundEffect({
     id: SFX_IDS.MATCH_4,
-    title: 'Combinação de quatro',
+    title: 'Match of four',
     src: new URL('./sfx/match-4.wav', import.meta.url).href,
     volume: 0.54,
     polyphony: 4,
@@ -48,7 +48,7 @@ export const SFX_CATALOG = Object.freeze({
 
   [SFX_IDS.MATCH_5]: createSoundEffect({
     id: SFX_IDS.MATCH_5,
-    title: 'Combinação de cinco',
+    title: 'Match of five',
     src: new URL('./sfx/match-5.flac', import.meta.url).href,
     volume: 0.46,
     polyphony: 3,
@@ -56,7 +56,7 @@ export const SFX_CATALOG = Object.freeze({
 
   [SFX_IDS.MATCH_6]: createSoundEffect({
     id: SFX_IDS.MATCH_6,
-    title: 'Combinação de seis ou mais',
+    title: 'Match of six or more',
     src: new URL('./sfx/match-6.flac', import.meta.url).href,
     volume: 0.43,
     polyphony: 3,

@@ -4,6 +4,7 @@ function createCharacterReaction(reaction) {
 
 export const CHARACTER_REACTION_IDS = Object.freeze({
   IDLE: 'idle',
+  WELCOME: 'welcome',
   DRAG_START: 'drag-start',
   SWAP_REJECTED: 'swap-rejected',
   MATCH_3: 'match-3',
@@ -21,6 +22,15 @@ export const CHARACTER_REACTION_CATALOG = Object.freeze({
     duration: null,
     motionDuration: null,
     cooldown: 0,
+  }),
+
+  [CHARACTER_REACTION_IDS.WELCOME]: createCharacterReaction({
+    id: CHARACTER_REACTION_IDS.WELCOME,
+    animationKey: 'welcome',
+    priority: 20,
+    duration: 7200,
+    motionDuration: 3000,
+    cooldown: 1000,
   }),
 
   [CHARACTER_REACTION_IDS.DRAG_START]: createCharacterReaction({

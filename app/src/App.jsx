@@ -26,15 +26,18 @@ import {
   trySwap,
 } from './game/board.js'
 import { SPECIAL_TYPES } from './game/candy.js'
- 
- 
 
 const BOARD_WIDTH = 8
-const SFX_MASTER_VOLUME = 1
+const SFX_MASTER_VOLUME = 0.72
 const APP_SCREENS = Object.freeze({
   START: 'start',
   TRANSITIONING: 'transitioning',
   PLAYING: 'playing',
+})
+const INTRO_STAGES = Object.freeze({
+  LOCKED: 'locked',
+  PRESENTATION: 'presentation',
+  READY: 'ready',
 })
 const CANDY_TYPES = ['blue', 'green', 'orange', 'purple', 'red', 'yellow']
 const CANDY_IMAGES = {
@@ -47,20 +50,19 @@ const CANDY_IMAGES = {
 }
 
 const CANDY_LABELS = {
-  blue: 'lua assombrada azul',
-  green: 'maçã envenenada verde',
-  orange: 'adaga de caramelo laranja',
-  purple: 'caveira doce roxa',
-  red: 'coração rachado vermelho',
-  yellow: 'estrela com presas amarela',
+  blue: 'blue haunted moon',
+  green: 'green poisoned apple',
+  orange: 'orange cursed dagger',
+  purple: 'purple candy skull',
+  red: 'red broken heart',
+  yellow: 'yellow fanged star',
 }
 
 const SPECIAL_LABELS = {
-  [SPECIAL_TYPES.STRIPED_ROW]: 'listrado horizontal',
-  [SPECIAL_TYPES.STRIPED_COLUMN]: 'listrado vertical',
-  [SPECIAL_TYPES.COLOR_BOMB]: 'bomba de cor',
+  [SPECIAL_TYPES.STRIPED_ROW]: 'with horizontal stripes',
+  [SPECIAL_TYPES.STRIPED_COLUMN]: 'with vertical stripes',
+  [SPECIAL_TYPES.COLOR_BOMB]: 'color bomb',
 }
-
 
 const STEP_DELAYS = {
   'match-found': 450,
@@ -78,14 +80,12 @@ function wait(milliseconds) {
   })
 }
 
-
 function getSwapStyle(index, swapAnimation) {
   if (swapAnimation === null) {
     return undefined
   }
 
   const { firstIndex, secondIndex } = swapAnimation
-
   let targetIndex = null
 
   if (index === firstIndex) {
@@ -100,10 +100,8 @@ function getSwapStyle(index, swapAnimation) {
 
   const currentRow = Math.floor(index / BOARD_WIDTH)
   const targetRow = Math.floor(targetIndex / BOARD_WIDTH)
-
   const currentColumn = index % BOARD_WIDTH
   const targetColumn = targetIndex % BOARD_WIDTH
-
   const rowDifference = targetRow - currentRow
   const columnDifference = targetColumn - currentColumn
 
@@ -126,7 +124,6 @@ function getSwapStyle(index, swapAnimation) {
     '--swap-y': verticalDistance,
   }
 }
-
 
 function getAnimatedIndices(previousBoard, step) {
   if (step.type === 'match-found') {
@@ -168,7 +165,6 @@ function getAnimatedIndices(previousBoard, step) {
   return []
 }
 
-
 function getMatchSizeForIndex(index, activeStep) {
   if (
     activeStep?.type !== 'match-found' ||
@@ -192,25 +188,22 @@ function getMatchSizeForIndex(index, activeStep) {
     : String(largestMatchSize)
 }
 
-
 function getCandyAriaLabel(candy, index) {
   if (candy === EMPTY_TILE) {
-    return `Posição vazia ${index + 1}`
+    return `Empty position ${index + 1}`
   }
 
   if (candy.specialType === SPECIAL_TYPES.COLOR_BOMB) {
-    return `Bomba de cor, posição ${index + 1}`
+    return `Color bomb, position ${index + 1}`
   }
 
   const specialDescription = candy.specialType
     ? ` ${SPECIAL_LABELS[candy.specialType]}`
     : ''
-
   const candyDescription = CANDY_LABELS[candy.candyType] ?? candy.candyType
 
-  return `Doce ${candyDescription}${specialDescription}, posição ${index + 1}`
+  return `${candyDescription}${specialDescription}, position ${index + 1}`
 }
-
 
 function newBoard() {
   return createBoard({
@@ -221,17 +214,19 @@ function newBoard() {
 
 function App() {
   const [currentScreen, setCurrentScreen] = useState(APP_SCREENS.START)
+  const [introStage, setIntroStage] = useState(INTRO_STAGES.LOCKED)
   const [board, setBoard] = useState([])
   const [draggedIndex, setDraggedIndex] = useState(null)
   const [selectedIndex, setSelectedIndex] = useState(null)
   const [score, setScore] = useState(0)
   const [message, setMessage] = useState(
-    'Arraste um doce ou selecione dois vizinhos.',
+    'Drag a candy or select two neighboring candies.',
   )
   const [isResolving, setIsResolving] = useState(false)
   const [activeStep, setActiveStep] = useState(null)
   const resolvingRef = useRef(false)
   const candiesSoundsRef = useRef(null)
+  const backgroundMusicRef = useRef(null)
   const characterReactionTimerRef = useRef(null)
   const [characterReaction, setCharacterReaction] = useState({
     id: CHARACTER_REACTION_IDS.IDLE,
@@ -283,118 +278,112 @@ function App() {
     }, reaction.duration)
   }
 
-
   async function attemptMove(firstIndex, secondIndex) {
-  if (resolvingRef.current) {
-    return
-  }
+    if (resolvingRef.current) {
+      return
+    }
 
-  const result = trySwap({
-    board,
-    firstIndex,
-    secondIndex,
-    width: BOARD_WIDTH,
-    candyTypes: CANDY_TYPES,
-  })
+    const result = trySwap({
+      board,
+      firstIndex,
+      secondIndex,
+      width: BOARD_WIDTH,
+      candyTypes: CANDY_TYPES,
+    })
 
-  if (!result.accepted && result.reason === 'not-adjacent') {
-    candiesSoundsRef.current?.play(SFX_IDS.SWAP_REJECTED)
-    showCharacterReaction(CHARACTER_REACTION_IDS.SWAP_REJECTED)
-    setMessage('Esses doces não são vizinhos.')
-    return
-  }
+    if (!result.accepted && result.reason === 'not-adjacent') {
+      candiesSoundsRef.current?.play(SFX_IDS.SWAP_REJECTED)
+      showCharacterReaction(CHARACTER_REACTION_IDS.SWAP_REJECTED)
+      setMessage('Those candies are not neighbors.')
+      return
+    }
 
-  if (!result.accepted) {
-    candiesSoundsRef.current?.play(SFX_IDS.SWAP_REJECTED)
-    showCharacterReaction(CHARACTER_REACTION_IDS.SWAP_REJECTED)
+    if (!result.accepted) {
+      candiesSoundsRef.current?.play(SFX_IDS.SWAP_REJECTED)
+      showCharacterReaction(CHARACTER_REACTION_IDS.SWAP_REJECTED)
+      resolvingRef.current = true
+      setIsResolving(true)
+      setMessage('That swap does not create a match.')
+
+      try {
+        setSwapAnimation({
+          firstIndex,
+          secondIndex,
+          rejected: true,
+        })
+
+        await wait(REJECTED_SWAP_DELAY)
+      } finally {
+        setSwapAnimation(null)
+        resolvingRef.current = false
+        setIsResolving(false)
+      }
+
+      return
+    }
+
     resolvingRef.current = true
     setIsResolving(true)
-    setMessage('Essa troca não forma uma combinação.')
+    setMessage('Swapping candies...')
 
     try {
       setSwapAnimation({
         firstIndex,
         secondIndex,
-        rejected: true,
+        rejected: false,
       })
 
-      await wait(REJECTED_SWAP_DELAY)
+      await wait(SWAP_DELAY)
+
+      setSwapAnimation(null)
+      setMessage('Resolving match...')
+
+      let previousBoard = board
+
+      for (const step of result.steps) {
+        if (step.type === 'match-found') {
+          const matchSoundIds = getMatchSoundIdsForStep(step)
+          const matchReactionId = getCharacterReactionIdForMatchStep(step)
+
+          candiesSoundsRef.current?.playMany(matchSoundIds)
+          showCharacterReaction(matchReactionId)
+        }
+
+        setAnimatedIndices(getAnimatedIndices(previousBoard, step))
+        setActiveStep(step)
+        setBoard(step.board)
+
+        await wait(STEP_DELAYS[step.type] ?? 300)
+
+        previousBoard = step.board
+      }
+
+      setBoard(result.board)
+      setScore((currentScore) => currentScore + result.score)
+      setMessage(
+        result.cascades > 1
+          ? `Cascade combo ×${result.cascades}! +${result.score} points.`
+          : `Match cleared! +${result.score} points.`,
+      )
     } finally {
       setSwapAnimation(null)
+      setActiveStep(null)
+      setAnimatedIndices([])
       resolvingRef.current = false
       setIsResolving(false)
     }
-
-    return
   }
-
-  resolvingRef.current = true
-  setIsResolving(true)
-  setMessage('Trocando doces...')
-
-  try {
-    setSwapAnimation({
-      firstIndex,
-      secondIndex,
-      rejected: false,
-    })
-
-    await wait(SWAP_DELAY)
-
-    setSwapAnimation(null)
-    setMessage('Resolvendo combinação...')
-
-    let previousBoard = board
-
-    for (const step of result.steps) {
-      if (step.type === 'match-found') {
-        const matchSoundIds = getMatchSoundIdsForStep(step)
-        const matchReactionId = getCharacterReactionIdForMatchStep(step)
-
-        candiesSoundsRef.current?.playMany(matchSoundIds)
-        showCharacterReaction(matchReactionId)
-      }
-
-      setAnimatedIndices(
-        getAnimatedIndices(previousBoard, step),
-      )
-
-      setActiveStep(step)
-      setBoard(step.board)
-
-      await wait(STEP_DELAYS[step.type] ?? 300)
-
-      previousBoard = step.board
-    }
-
-    setBoard(result.board)
-    setScore((currentScore) => currentScore + result.score)
-
-    setMessage(
-      result.cascades > 1
-        ? `Combo de ${result.cascades} cascatas! +${result.score} pontos.`
-        : `Combinação concluída! +${result.score} pontos.`,
-    )
-  } finally {
-    setSwapAnimation(null)
-    setActiveStep(null)
-    setAnimatedIndices([])
-    resolvingRef.current = false
-    setIsResolving(false)
-  }
-}
-
 
   function handleTileClick(index) {
     if (selectedIndex === null) {
       setSelectedIndex(index)
-      setMessage('Agora selecione um doce vizinho.')
+      setMessage('Now select a neighboring candy.')
       return
     }
 
     if (selectedIndex === index) {
       setSelectedIndex(null)
-      setMessage('Seleção cancelada.')
+      setMessage('Selection canceled.')
       return
     }
 
@@ -402,7 +391,7 @@ function App() {
       candiesSoundsRef.current?.play(SFX_IDS.SWAP_REJECTED)
       showCharacterReaction(CHARACTER_REACTION_IDS.SWAP_REJECTED)
       setSelectedIndex(index)
-      setMessage('Seleção alterada. Escolha um vizinho deste doce.')
+      setMessage('Selection moved. Choose one of this candy’s neighbors.')
       return
     }
 
@@ -445,18 +434,43 @@ function App() {
     setMessage(nextMessage)
   }
 
-  function handleStartGame() {
-    if (currentScreen !== APP_SCREENS.START) {
+  function handleEnterIntro() {
+    if (
+      currentScreen !== APP_SCREENS.START ||
+      introStage !== INTRO_STAGES.LOCKED
+    ) {
       return
     }
 
-    resetGame('Arraste um doce ou selecione dois vizinhos.')
+    void backgroundMusicRef.current?.play({ unmute: true })
+    setIntroStage(INTRO_STAGES.PRESENTATION)
+  }
+
+  function handleAwakenIntro() {
+    if (
+      currentScreen !== APP_SCREENS.START ||
+      introStage !== INTRO_STAGES.PRESENTATION
+    ) {
+      return
+    }
+
+    setIntroStage(INTRO_STAGES.READY)
+  }
+
+  function handleStartGame() {
+    if (
+      currentScreen !== APP_SCREENS.START ||
+      introStage !== INTRO_STAGES.READY
+    ) {
+      return
+    }
+
+    resetGame('Drag a candy or select two neighboring candies.')
     setCurrentScreen(APP_SCREENS.TRANSITIONING)
   }
 
   function handleStartTransitionEnd(event) {
-    const transitionBelongsToStartScreen =
-      event.target === event.currentTarget
+    const transitionBelongsToStartScreen = event.target === event.currentTarget
 
     if (
       currentScreen !== APP_SCREENS.TRANSITIONING ||
@@ -466,48 +480,129 @@ function App() {
     }
 
     setCurrentScreen(APP_SCREENS.PLAYING)
+    showCharacterReaction(CHARACTER_REACTION_IDS.WELCOME)
   }
 
   function restartGame() {
-    resetGame('Novo tabuleiro criado sem combinações iniciais.')
+    resetGame('A fresh board appeared with no opening matches.')
+    showCharacterReaction(CHARACTER_REACTION_IDS.WELCOME)
   }
+
+  const isPlaying = currentScreen === APP_SCREENS.PLAYING
 
   return (
     <main className="app" data-screen={currentScreen}>
-      <AnimatedBackground />
+      <AnimatedBackground variant={isPlaying ? 'game' : 'intro'} />
       <CandiesSounds
         ref={candiesSoundsRef}
         masterVolume={SFX_MASTER_VOLUME}
       />
+      <BackgroundMusic
+        ref={backgroundMusicRef}
+        showControl={isPlaying}
+      />
 
-      {currentScreen !== APP_SCREENS.PLAYING && (
+      {!isPlaying && (
         <section
           className="start-screen"
-          aria-labelledby="start-title"
+          data-intro-stage={introStage}
+          aria-labelledby={
+            introStage === INTRO_STAGES.LOCKED
+              ? 'intro-gate-title'
+              : 'start-title'
+          }
           aria-busy={currentScreen === APP_SCREENS.TRANSITIONING}
           onAnimationEnd={handleStartTransitionEnd}
         >
-          <p className="eyebrow">Dark Candy</p>
-          <h1 id="start-title">Kuromi: Sweet Mayhem</h1>
-          <KuromiCharacter placement="start" />
-          <p className="start-description">
-            Combine doces amaldiçoados e desperte o caos mais fofo das trevas.
-          </p>
+          {introStage === INTRO_STAGES.LOCKED ? (
+            <div className="intro-gate">
+              <p
+                className="intro-gate-mark intro-depth"
+                style={{ '--intro-delay': '60ms' }}
+                aria-hidden="true"
+              >
+                ✦ ☾ ✦
+              </p>
+              <p
+                className="intro-gate-kicker intro-depth"
+                style={{ '--intro-delay': '160ms' }}
+              >
+                A cursed arcade signal is waiting
+              </p>
+              <h1
+                className="intro-gate-title intro-depth"
+                id="intro-gate-title"
+                style={{ '--intro-delay': '280ms' }}
+              >
+                Enter the nightmare
+              </h1>
+              <button
+                className="intro-enter intro-depth"
+                style={{ '--intro-delay': '430ms' }}
+                type="button"
+                onClick={handleEnterIntro}
+              >
+                <span>Open the gates</span>
+              </button>
+            </div>
+          ) : (
+            <>
+              <div className="intro-copy">
+                <p
+                  className="intro-kicker intro-depth"
+                  style={{ '--intro-delay': '80ms' }}
+                >
+                  A gothic arcade match-3
+                </p>
+                <h1
+                  className="intro-title intro-depth"
+                  id="start-title"
+                  style={{ '--intro-delay': '220ms' }}
+                >
+                  <span>Kuromi:</span>
+                  <span>Sweet Mayhem</span>
+                </h1>
+                <p
+                  className="start-description intro-depth"
+                  style={{ '--intro-delay': '410ms' }}
+                >
+                  Match cursed candy and unleash the cutest chaos in the dark.
+                </p>
+                <p
+                  className="intro-credit intro-depth"
+                  style={{ '--intro-delay': '560ms' }}
+                >
+                  Developed by Danilo Nascimento
+                </p>
+              </div>
 
-          <button
-            className="start-button"
-            type="button"
-            disabled={currentScreen === APP_SCREENS.TRANSITIONING}
-            onClick={handleStartGame}
-          >
-            {currentScreen === APP_SCREENS.TRANSITIONING
-              ? 'Despertando...'
-              : 'Iniciar jogo'}
-          </button>
+              {introStage === INTRO_STAGES.PRESENTATION ? (
+                <button
+                  className="intro-unlock intro-depth"
+                  style={{ '--intro-delay': '760ms' }}
+                type="button"
+                onClick={handleAwakenIntro}
+              >
+                  <span>Awaken</span>
+                </button>
+              ) : (
+                <button
+                  className="start-button"
+                  type="button"
+                  disabled={currentScreen === APP_SCREENS.TRANSITIONING}
+                  onClick={handleStartGame}
+                >
+                  {currentScreen === APP_SCREENS.TRANSITIONING
+                    ? 'Entering the arcade...'
+                    : 'Start the game'}
+                </button>
+              )}
+            </>
+          )}
         </section>
       )}
 
-      {currentScreen === APP_SCREENS.PLAYING && (
+      {isPlaying && (
         <div className="game-stage">
           <KuromiCharacter
             placement="game"
@@ -515,104 +610,102 @@ function App() {
             reactionSequence={characterReaction.sequence}
           />
 
-          <section className="game-shell" aria-label="Jogo de combinar doces">
-        <header className="game-header">
-          <div>
-            <p className="eyebrow">Dark Candy — protótipo</p>
-            <h1>Kuromi</h1>
-          </div>
+          <section className="game-shell" aria-label="Candy matching game">
+            <header className="game-header">
+              <div>
+                <p className="eyebrow">Dark Candy // Arcade</p>
+                <h1>Sweet Mayhem</h1>
+              </div>
 
-          <div className="score-card" aria-label={`${score} pontos`}>
-            <span>Pontos</span>
-            <strong>{score.toLocaleString('pt-BR')}</strong>
-          </div>
-        </header>
+              <div className="score-card" aria-label={`${score} points`}>
+                <span>Score</span>
+                <strong>{score.toLocaleString('en-US')}</strong>
+              </div>
+            </header>
 
-        <div
-          className="game"
-          style={{ '--board-width': BOARD_WIDTH }}
-          data-step={
-            swapAnimation
-             ? swapAnimation.rejected
-              ? 'tiles-swap-rejected'
-              : 'tiles-swapping'
-             : activeStep?.type 
-          }
-          aria-busy={isResolving}
-          aria-label="Tabuleiro 8 por 8"
-        >
-          {board.map((candy, index) => {
-            const isEmpty = candy === EMPTY_TILE
-            const candyType = candy?.candyType ?? null
-            const specialType = candy?.specialType ?? null
-            const isAnimating = animatedIndices.includes(index)
-            const matchSize = getMatchSizeForIndex(index, activeStep)
-            const swapStyle = getSwapStyle(index, swapAnimation)
-            const isSwapping = swapStyle !== undefined
-            const isSwapFront = swapAnimation?.firstIndex === index
-
-            return (
-              <button               
-                className={`tile${selectedIndex === index ? ' selected' : ''}${
-                  isEmpty ? ' empty' : ''
-                }${isAnimating ? ' animating' : ''}${
-                  isSwapping ? ' swapping' : ''
-                }${isSwapFront ? ' swap-front' : ''}${
-                  matchSize ? ` match-${matchSize}` : ''
-                }`}
-                style={swapStyle}
-                key={index}
-                type="button"
-                disabled={isResolving}
-                draggable={!isResolving && !isEmpty}
-                aria-label={getCandyAriaLabel(candy, index)}
-                aria-pressed={selectedIndex === index}
-                onClick={() => handleTileClick(index)}
-                onDragStart={() => handleDragStart(index)}
-                onDragOver={(event) => event.preventDefault()}
-                onDrop={(event) => handleDrop(event, index)}
-                onDragEnd={() => setDraggedIndex(null)}
-              >
-                {!isEmpty && (
-                  <span
-                    className="candy-visual"
-                    data-candy-type={candyType ?? undefined}
-                    data-special-type={specialType ?? undefined}
-                  >
-                    <img
-                      src={
-                        specialType === SPECIAL_TYPES.COLOR_BOMB
-                          ? colorBombCandy
-                          : CANDY_IMAGES[candyType]
-                      }
-                      alt=""
-                      draggable="false"
-                    />
-                  </span>
-                )}
-              </button>
-            )
-          })}
-        </div>
-
-        <footer className="game-footer">
-          <p className="message" aria-live="polite">
-            {message}
-          </p>
-
-          <div className="footer-controls">
-            <BackgroundMusic />
-
-            <button 
-              className="restart-button"
-              type="button"
-              disabled={isResolving}
-              onClick={restartGame}
+            <div
+              className="game"
+              style={{ '--board-width': BOARD_WIDTH }}
+              data-step={
+                swapAnimation
+                  ? swapAnimation.rejected
+                    ? 'tiles-swap-rejected'
+                    : 'tiles-swapping'
+                  : activeStep?.type
+              }
+              aria-busy={isResolving}
+              aria-label="8 by 8 candy board"
             >
-              Reiniciar
-            </button>
-          </div>
-        </footer>
+              {board.map((candy, index) => {
+                const isEmpty = candy === EMPTY_TILE
+                const candyType = candy?.candyType ?? null
+                const specialType = candy?.specialType ?? null
+                const isAnimating = animatedIndices.includes(index)
+                const matchSize = getMatchSizeForIndex(index, activeStep)
+                const swapStyle = getSwapStyle(index, swapAnimation)
+                const isSwapping = swapStyle !== undefined
+                const isSwapFront = swapAnimation?.firstIndex === index
+
+                return (
+                  <button
+                    className={`tile${selectedIndex === index ? ' selected' : ''}${
+                      isEmpty ? ' empty' : ''
+                    }${isAnimating ? ' animating' : ''}${
+                      isSwapping ? ' swapping' : ''
+                    }${isSwapFront ? ' swap-front' : ''}${
+                      matchSize ? ` match-${matchSize}` : ''
+                    }`}
+                    style={swapStyle}
+                    key={index}
+                    type="button"
+                    disabled={isResolving}
+                    draggable={!isResolving && !isEmpty}
+                    aria-label={getCandyAriaLabel(candy, index)}
+                    aria-pressed={selectedIndex === index}
+                    onClick={() => handleTileClick(index)}
+                    onDragStart={() => handleDragStart(index)}
+                    onDragOver={(event) => event.preventDefault()}
+                    onDrop={(event) => handleDrop(event, index)}
+                    onDragEnd={() => setDraggedIndex(null)}
+                  >
+                    {!isEmpty && (
+                      <span
+                        className="candy-visual"
+                        data-candy-type={candyType ?? undefined}
+                        data-special-type={specialType ?? undefined}
+                      >
+                        <img
+                          src={
+                            specialType === SPECIAL_TYPES.COLOR_BOMB
+                              ? colorBombCandy
+                              : CANDY_IMAGES[candyType]
+                          }
+                          alt=""
+                          draggable="false"
+                        />
+                      </span>
+                    )}
+                  </button>
+                )
+              })}
+            </div>
+
+            <footer className="game-footer">
+              <p className="message" aria-live="polite">
+                {message}
+              </p>
+
+              <div className="footer-controls">
+                <button
+                  className="restart-button"
+                  type="button"
+                  disabled={isResolving}
+                  onClick={restartGame}
+                >
+                  Restart
+                </button>
+              </div>
+            </footer>
           </section>
         </div>
       )}

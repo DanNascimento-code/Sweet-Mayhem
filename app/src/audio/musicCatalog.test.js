@@ -14,10 +14,15 @@ test('music playlist preserves the intended track order', () => {
   assert.deepEqual(
     MUSIC_PLAYLIST.map(({ title }) => title),
     [
-      'Gothic',
+      'Animated Death Loop',
       'Depeche Mode - Occults',
-      'Darker Waves',
+      "Fight Them Until We Can't",
     ],
+  )
+
+  assert.match(
+    MUSIC_PLAYLIST[0].src,
+    /track-01-animated-death-loop\.mp3$/,
   )
 
   for (const track of MUSIC_PLAYLIST) {
@@ -37,12 +42,12 @@ test('every playlist entry has an audio source and auditable licensing data', ()
 })
 
 test('getPlaylistTrack returns tracks by their playlist index', () => {
-  assert.equal(getPlaylistTrack(0)?.title, 'Gothic')
+  assert.equal(getPlaylistTrack(0)?.title, 'Animated Death Loop')
   assert.equal(
     getPlaylistTrack(1)?.title,
     'Depeche Mode - Occults',
   )
-  assert.equal(getPlaylistTrack(2)?.title, 'Darker Waves')
+  assert.equal(getPlaylistTrack(2)?.title, "Fight Them Until We Can't")
 })
 
 test('getPlaylistTrack rejects indices outside the playlist', () => {

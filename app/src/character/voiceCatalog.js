@@ -17,20 +17,14 @@ function createCharacterVoiceSet(voiceAssets) {
 export const CHARACTER_VOICE_CATALOG = Object.freeze({
   [CHARACTER_REACTION_IDS.IDLE]: createCharacterVoiceSet([]),
 
-  [CHARACTER_REACTION_IDS.DRAG_START]: createCharacterVoiceSet([
+  [CHARACTER_REACTION_IDS.WELCOME]: createCharacterVoiceSet([
     createCharacterVoiceAsset(
-      'drag-start-0',
-      new URL('../audio/voice/drag-start-0.wav', import.meta.url).href,
-    ),
-    createCharacterVoiceAsset(
-      'drag-start-1',
-      new URL('../audio/voice/drag-start-1.wav', import.meta.url).href,
-    ),
-    createCharacterVoiceAsset(
-      'drag-start-2',
-      new URL('../audio/voice/drag-start-2.wav', import.meta.url).href,
+      'welcome-0',
+      new URL('../audio/voice/welcome-0.wav', import.meta.url).href,
     ),
   ]),
+
+  [CHARACTER_REACTION_IDS.DRAG_START]: createCharacterVoiceSet([]),
 
   [CHARACTER_REACTION_IDS.SWAP_REJECTED]: createCharacterVoiceSet([
     createCharacterVoiceAsset(
@@ -142,4 +136,3 @@ export function getAllCharacterVoiceAssets() {
     Object.values(CHARACTER_VOICE_CATALOG).flat(),
   )
 }
-
