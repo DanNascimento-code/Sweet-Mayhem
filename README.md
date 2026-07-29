@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="app/public/sweet-mayhem-favicon.svg" width="96" alt="Sweet Mayhem neon skull candy icon" />
+  <img src="app/public/sweet-mayhem-emblem.png" width="128" alt="Sweet Mayhem bat-winged broken-heart candy emblem" />
 </p>
 
 <h1 align="center">Sweet Mayhem</h1>
