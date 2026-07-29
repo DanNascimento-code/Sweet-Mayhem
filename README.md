@@ -8,6 +8,10 @@
   A dark, gothic and slightly sarcastic match-3 game built as an interactive frontend.
 </p>
 
+<p align="center">
+  <a href="https://sweet-mayhem-klg3.vercel.app/"><strong>▶ PLAY SWEET MAYHEM</strong></a>
+</p>
+
 ## About the game
 
 **Sweet Mayhem** takes the familiar match-3 formula and drops it into a neon gothic arcade. The player swaps cursed candies on an 8×8 board, creates combinations, triggers cascades and earns score multipliers while a reactive character comments.
