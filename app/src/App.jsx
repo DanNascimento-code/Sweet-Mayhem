@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 import AnimatedBackground from './components/AnimatedBackground.jsx'
 import BackgroundMusic from './components/BackgroundMusic.jsx'
@@ -6,6 +6,11 @@ import CandiesSounds from './components/CandiesSounds.jsx'
 import KuromiCharacter from './components/KuromiCharacter.jsx'
 import { SFX_IDS } from './audio/sfxCatalog.js'
 import { getMatchSoundIdsForStep } from './audio/sfxEvents.js'
+import {
+  CHARACTER_REACTION_IDS,
+  getCharacterReaction,
+} from './character/reactionCatalog.js'
+import { getCharacterReactionIdForMatchStep } from './character/reactionEvents.js'
 import blueCandy from './images/dark-candies/blue-haunted-moon.png'
 import colorBombCandy from './images/dark-candies/color-bomb.png'
 import greenCandy from './images/dark-candies/green-poison-apple.png'
@@ -227,8 +232,56 @@ function App() {
   const [activeStep, setActiveStep] = useState(null)
   const resolvingRef = useRef(false)
   const candiesSoundsRef = useRef(null)
+  const characterReactionTimerRef = useRef(null)
+  const [characterReaction, setCharacterReaction] = useState({
+    id: CHARACTER_REACTION_IDS.IDLE,
+    sequence: 0,
+  })
   const [animatedIndices, setAnimatedIndices] = useState([])
   const [swapAnimation, setSwapAnimation] = useState(null)
+
+  useEffect(() => {
+    return () => {
+      if (characterReactionTimerRef.current !== null) {
+        window.clearTimeout(characterReactionTimerRef.current)
+      }
+    }
+  }, [])
+
+  function clearCharacterReactionTimer() {
+    if (characterReactionTimerRef.current === null) {
+      return
+    }
+
+    window.clearTimeout(characterReactionTimerRef.current)
+    characterReactionTimerRef.current = null
+  }
+
+  function showCharacterReaction(reactionId) {
+    const reaction = getCharacterReaction(reactionId)
+
+    if (!reaction) {
+      return
+    }
+
+    clearCharacterReactionTimer()
+    setCharacterReaction((currentReaction) => ({
+      id: reaction.id,
+      sequence: currentReaction.sequence + 1,
+    }))
+
+    if (reaction.duration === null) {
+      return
+    }
+
+    characterReactionTimerRef.current = window.setTimeout(() => {
+      setCharacterReaction((currentReaction) => ({
+        id: CHARACTER_REACTION_IDS.IDLE,
+        sequence: currentReaction.sequence + 1,
+      }))
+      characterReactionTimerRef.current = null
+    }, reaction.duration)
+  }
 
 
   async function attemptMove(firstIndex, secondIndex) {
@@ -246,12 +299,14 @@ function App() {
 
   if (!result.accepted && result.reason === 'not-adjacent') {
     candiesSoundsRef.current?.play(SFX_IDS.SWAP_REJECTED)
+    showCharacterReaction(CHARACTER_REACTION_IDS.SWAP_REJECTED)
     setMessage('Esses doces não são vizinhos.')
     return
   }
 
   if (!result.accepted) {
     candiesSoundsRef.current?.play(SFX_IDS.SWAP_REJECTED)
+    showCharacterReaction(CHARACTER_REACTION_IDS.SWAP_REJECTED)
     resolvingRef.current = true
     setIsResolving(true)
     setMessage('Essa troca não forma uma combinação.')
@@ -294,8 +349,10 @@ function App() {
     for (const step of result.steps) {
       if (step.type === 'match-found') {
         const matchSoundIds = getMatchSoundIdsForStep(step)
+        const matchReactionId = getCharacterReactionIdForMatchStep(step)
 
         candiesSoundsRef.current?.playMany(matchSoundIds)
+        showCharacterReaction(matchReactionId)
       }
 
       setAnimatedIndices(
@@ -343,6 +400,7 @@ function App() {
 
     if (!areAdjacent(selectedIndex, index, BOARD_WIDTH, board.length)) {
       candiesSoundsRef.current?.play(SFX_IDS.SWAP_REJECTED)
+      showCharacterReaction(CHARACTER_REACTION_IDS.SWAP_REJECTED)
       setSelectedIndex(index)
       setMessage('Seleção alterada. Escolha um vizinho deste doce.')
       return
@@ -355,6 +413,7 @@ function App() {
   function handleDragStart(index) {
     setDraggedIndex(index)
     candiesSoundsRef.current?.play(SFX_IDS.DRAG_START)
+    showCharacterReaction(CHARACTER_REACTION_IDS.DRAG_START)
   }
 
   function handleDrop(event, targetIndex) {
@@ -369,6 +428,7 @@ function App() {
   }
 
   function resetGame(nextMessage) {
+    clearCharacterReactionTimer()
     setBoard(newBoard())
     setScore(0)
     setDraggedIndex(null)
@@ -376,6 +436,10 @@ function App() {
     setActiveStep(null)
     setAnimatedIndices([])
     setSwapAnimation(null)
+    setCharacterReaction((currentReaction) => ({
+      id: CHARACTER_REACTION_IDS.IDLE,
+      sequence: currentReaction.sequence + 1,
+    }))
     resolvingRef.current = false
     setIsResolving(false)
     setMessage(nextMessage)
@@ -445,7 +509,11 @@ function App() {
 
       {currentScreen === APP_SCREENS.PLAYING && (
         <div className="game-stage">
-          <KuromiCharacter placement="game" />
+          <KuromiCharacter
+            placement="game"
+            reactionId={characterReaction.id}
+            reactionSequence={characterReaction.sequence}
+          />
 
           <section className="game-shell" aria-label="Jogo de combinar doces">
         <header className="game-header">

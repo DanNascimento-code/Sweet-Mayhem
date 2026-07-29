@@ -264,17 +264,478 @@ button {
 }
 
 .kuromi-character {
+  position: relative;
   pointer-events: none;
   user-select: none;
+}
+
+.kuromi-character-portrait {
+  position: relative;
+  z-index: 1;
+}
+
+.kuromi-dialogue {
+  position: absolute;
+  z-index: 3;
+  bottom: 96%;
+  left: 50%;
+  width: min(220px, 72vw);
+  transform: translateX(-50%);
+}
+
+.kuromi-dialogue:empty {
+  display: none;
+}
+
+.kuromi-speech-bubble {
+  position: relative;
+  margin: 0;
+  padding: 10px 13px;
+  border: 1px solid rgb(244 185 255 / 54%);
+  border-radius: 16px 16px 16px 5px;
+  color: #fff7ff;
+  font-size: clamp(0.76rem, 1.5vw, 0.88rem);
+  font-weight: 700;
+  line-height: 1.35;
+  text-align: center;
+  text-wrap: balance;
+  background:
+    linear-gradient(145deg, rgb(63 24 76 / 96%), rgb(24 10 33 / 97%));
+  box-shadow:
+    0 12px 24px rgb(0 0 0 / 42%),
+    0 0 18px rgb(207 86 255 / 22%),
+    inset 0 1px 0 rgb(255 255 255 / 12%);
+  animation: kuromi-dialogue-enter 240ms cubic-bezier(0.2, 0.85, 0.3, 1) both;
+}
+
+.kuromi-speech-bubble::after {
+  position: absolute;
+  bottom: -7px;
+  left: 50%;
+  width: 12px;
+  height: 12px;
+  border-bottom: 1px solid rgb(244 185 255 / 54%);
+  border-left: 1px solid rgb(244 185 255 / 54%);
+  background: rgb(24 10 33 / 97%);
+  content: '';
+  transform: translateX(-50%) rotate(-45deg);
 }
 
 .kuromi-character img {
   display: block;
   width: 100%;
   height: auto;
+  transform-origin: 50% 92%;
+  will-change: filter, transform;
   filter:
     drop-shadow(0 14px 18px rgb(0 0 0 / 42%))
     drop-shadow(0 0 14px rgb(219 104 255 / 20%));
+}
+
+.kuromi-character[data-animation="idle"] img {
+  animation: kuromi-idle 3200ms ease-in-out infinite;
+}
+
+.kuromi-character[data-animation="attention"] img {
+  animation:
+    kuromi-attention
+      var(--character-motion-duration, 500ms)
+      cubic-bezier(0.2, 0.8, 0.3, 1)
+      both,
+    kuromi-attention-flash
+      var(--character-motion-duration, 500ms)
+      ease-out
+      both;
+}
+
+.kuromi-character[data-animation="disapprove"] img {
+  animation:
+    kuromi-disapprove
+      var(--character-motion-duration, 1200ms)
+      ease-in-out
+      both,
+    kuromi-disapprove-flash
+      var(--character-motion-duration, 1200ms)
+      ease-out
+      both;
+}
+
+.kuromi-character[data-animation="celebrate-small"] img {
+  animation:
+    kuromi-celebrate-small
+      var(--character-motion-duration, 1100ms)
+      cubic-bezier(0.2, 0.8, 0.3, 1)
+      both,
+    kuromi-celebration-glow
+      var(--character-motion-duration, 1100ms)
+      ease-out
+      both;
+}
+
+.kuromi-character[data-animation="celebrate-medium"] img {
+  animation:
+    kuromi-celebrate-medium
+      var(--character-motion-duration, 1300ms)
+      cubic-bezier(0.18, 0.84, 0.28, 1)
+      both,
+    kuromi-celebration-glow
+      var(--character-motion-duration, 1300ms)
+      ease-out
+      both;
+}
+
+.kuromi-character[data-animation="celebrate-large"] img {
+  animation:
+    kuromi-celebrate-large
+      var(--character-motion-duration, 1500ms)
+      cubic-bezier(0.16, 0.86, 0.24, 1)
+      both,
+    kuromi-celebration-glow
+      var(--character-motion-duration, 1500ms)
+      ease-out
+      both;
+}
+
+.kuromi-character[data-animation="celebrate-epic"] img {
+  animation:
+    kuromi-celebrate-epic
+      var(--character-motion-duration, 1800ms)
+      cubic-bezier(0.16, 0.9, 0.22, 1)
+      both,
+    kuromi-celebration-glow
+      var(--character-motion-duration, 1800ms)
+      ease-out
+      both;
+}
+
+.kuromi-character[data-animation="celebrate-combo"] img {
+  animation:
+    kuromi-celebrate-combo
+      var(--character-motion-duration, 1900ms)
+      cubic-bezier(0.16, 0.88, 0.24, 1)
+      both,
+    kuromi-celebration-glow
+      var(--character-motion-duration, 1900ms)
+      ease-out
+      both;
+}
+
+.kuromi-character[data-animation^="celebrate-"]::before {
+  position: absolute;
+  z-index: 0;
+  inset: 8% -12% 2%;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgb(255 230 255 / 68%) 0 8%,
+    rgb(229 111 255 / 48%) 24%,
+    rgb(153 32 255 / 28%) 46%,
+    transparent 72%
+  );
+  content: '';
+  filter: blur(12px);
+  transform: scale(0.55);
+  animation: kuromi-celebration-aura
+    var(--character-motion-duration, 1500ms)
+    ease-out
+    both;
+}
+
+@keyframes kuromi-idle {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-0.8deg);
+  }
+
+  50% {
+    transform: translateY(-5px) rotate(0.8deg);
+  }
+}
+
+@keyframes kuromi-dialogue-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.96);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes kuromi-attention {
+  0%,
+  100% {
+    transform: translateY(0) scale(1) rotate(0);
+  }
+
+  22% {
+    transform: translate(-5px, -13px) scale(1.08) rotate(-9deg);
+  }
+
+  48% {
+    transform: translate(6px, -5px) scale(1.04) rotate(10deg);
+  }
+
+  74% {
+    transform: translate(-2px, -8px) scale(1.05) rotate(-5deg);
+  }
+}
+
+@keyframes kuromi-attention-flash {
+  0%,
+  100% {
+    filter:
+      drop-shadow(0 14px 18px rgb(0 0 0 / 42%))
+      drop-shadow(0 0 14px rgb(219 104 255 / 20%));
+  }
+
+  38% {
+    filter:
+      brightness(1.14)
+      drop-shadow(0 15px 18px rgb(0 0 0 / 46%))
+      drop-shadow(0 0 18px rgb(255 211 255 / 68%))
+      drop-shadow(0 0 30px rgb(202 71 255 / 48%));
+  }
+}
+
+@keyframes kuromi-disapprove {
+  0%,
+  100% {
+    transform: translateX(0) rotate(0) scale(1);
+  }
+
+  10%,
+  34% {
+    transform: translate(-11px, -3px) rotate(-8deg) scale(1.04);
+  }
+
+  22%,
+  46% {
+    transform: translate(11px, -3px) rotate(8deg) scale(1.04);
+  }
+
+  60% {
+    transform: translate(-6px, 2px) rotate(-5deg) scale(0.97);
+  }
+
+  73% {
+    transform: translate(6px, -7px) rotate(5deg) scale(1.03);
+  }
+
+  87% {
+    transform: translateY(3px) rotate(0) scale(0.96);
+  }
+}
+
+@keyframes kuromi-disapprove-flash {
+  0%,
+  100% {
+    filter:
+      drop-shadow(0 14px 18px rgb(0 0 0 / 42%))
+      drop-shadow(0 0 14px rgb(219 104 255 / 20%));
+  }
+
+  36%,
+  68% {
+    filter:
+      saturate(1.25)
+      contrast(1.08)
+      drop-shadow(0 16px 18px rgb(0 0 0 / 48%))
+      drop-shadow(0 0 18px rgb(255 87 177 / 58%))
+      drop-shadow(0 0 30px rgb(137 26 218 / 46%));
+  }
+}
+
+@keyframes kuromi-celebrate-small {
+  0%,
+  100% {
+    transform: translateY(0) scale(1) rotate(0);
+  }
+
+  22% {
+    transform: translate(-5px, -17px) scale(1.07) rotate(-10deg);
+  }
+
+  43% {
+    transform: translate(4px, 0) scale(0.96) rotate(8deg);
+  }
+
+  64% {
+    transform: translate(-3px, -10px) scale(1.05) rotate(7deg);
+  }
+
+  83% {
+    transform: translate(2px, 0) scale(0.98) rotate(-4deg);
+  }
+}
+
+@keyframes kuromi-celebrate-medium {
+  0% {
+    transform: translateY(0) scale(1) rotate(0);
+  }
+
+  18% {
+    transform: translate(-7px, -20px) scale(1.09) rotate(72deg);
+  }
+
+  38% {
+    transform: translate(8px, -5px) scale(0.96) rotate(150deg);
+  }
+
+  58% {
+    transform: translate(-5px, -15px) scale(1.07) rotate(228deg);
+  }
+
+  78% {
+    transform: translate(4px, -2px) scale(0.98) rotate(304deg);
+  }
+
+  100% {
+    transform: translateY(0) scale(1) rotate(360deg);
+  }
+}
+
+@keyframes kuromi-celebrate-large {
+  0% {
+    transform: translateY(0) scale(1) rotate(0);
+  }
+
+  16% {
+    transform: translate(-10px, -25px) scale(1.12) rotate(115deg);
+  }
+
+  34% {
+    transform: translate(9px, -5px) scale(0.94) rotate(245deg);
+  }
+
+  52% {
+    transform: translate(-7px, -20px) scale(1.1) rotate(382deg);
+  }
+
+  70% {
+    transform: translate(7px, -3px) scale(0.96) rotate(520deg);
+  }
+
+  86% {
+    transform: translate(-3px, -9px) scale(1.05) rotate(640deg);
+  }
+
+  100% {
+    transform: translateY(0) scale(1) rotate(720deg);
+  }
+}
+
+@keyframes kuromi-celebrate-epic {
+  0% {
+    transform: translateY(0) scale(1) rotate(0);
+  }
+
+  14% {
+    transform: translate(-12px, -31px) scale(1.16) rotate(150deg);
+  }
+
+  30% {
+    transform: translate(12px, -7px) scale(0.92) rotate(330deg);
+  }
+
+  46% {
+    transform: translate(-10px, -27px) scale(1.14) rotate(510deg);
+  }
+
+  62% {
+    transform: translate(9px, -3px) scale(0.94) rotate(690deg);
+  }
+
+  78% {
+    transform: translate(-6px, -17px) scale(1.1) rotate(865deg);
+  }
+
+  100% {
+    transform: translateY(0) scale(1) rotate(1080deg);
+  }
+}
+
+@keyframes kuromi-celebrate-combo {
+  0% {
+    transform: translate(0, 0) scale(1) rotate(0);
+  }
+
+  12% {
+    transform: translate(-14px, -26px) scale(1.15) rotate(175deg);
+  }
+
+  25% {
+    transform: translate(14px, -7px) scale(0.93) rotate(360deg);
+  }
+
+  39% {
+    transform: translate(-12px, -32px) scale(1.17) rotate(560deg);
+  }
+
+  54% {
+    transform: translate(12px, -3px) scale(0.92) rotate(775deg);
+  }
+
+  69% {
+    transform: translate(-9px, -22px) scale(1.13) rotate(995deg);
+  }
+
+  83% {
+    transform: translate(7px, -6px) scale(0.97) rotate(1195deg);
+  }
+
+  100% {
+    transform: translate(0, 0) scale(1) rotate(1440deg);
+  }
+}
+
+@keyframes kuromi-celebration-aura {
+  0% {
+    opacity: 0;
+    transform: scale(0.45) rotate(0);
+  }
+
+  24% {
+    opacity: 0.95;
+    transform: scale(1.05) rotate(70deg);
+  }
+
+  58% {
+    opacity: 0.72;
+    transform: scale(1.2) rotate(190deg);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(1.42) rotate(360deg);
+  }
+}
+
+@keyframes kuromi-celebration-glow {
+  0%,
+  100% {
+    filter:
+      drop-shadow(0 14px 18px rgb(0 0 0 / 42%))
+      drop-shadow(0 0 14px rgb(219 104 255 / 20%));
+  }
+
+  38% {
+    filter:
+      brightness(1.18)
+      saturate(1.18)
+      drop-shadow(0 17px 20px rgb(0 0 0 / 46%))
+      drop-shadow(0 0 12px rgb(255 255 255 / 92%))
+      drop-shadow(0 0 24px rgb(244 185 255 / 88%))
+      drop-shadow(0 0 44px rgb(170 52 255 / 72%));
+  }
+
+  72% {
+    filter:
+      drop-shadow(0 14px 18px rgb(0 0 0 / 42%))
+      drop-shadow(0 0 20px rgb(219 104 255 / 48%));
+  }
 }
 
 .kuromi-character[data-placement="start"] {
@@ -954,6 +1415,11 @@ h1 {
   .kuromi-character[data-placement="game"] {
     width: clamp(86px, 20vw, 118px);
     margin-bottom: -8px;
+  }
+
+  .kuromi-dialogue {
+    bottom: 92%;
+    width: min(210px, 62vw);
   }
 }
 
